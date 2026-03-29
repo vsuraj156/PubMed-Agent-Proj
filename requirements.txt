@@ -1,0 +1,4 @@
+anthropic
+biopython
+streamlit
+python-dotenv
