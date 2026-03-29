@@ -155,8 +155,25 @@ export default function Home() {
       )}
 
       {result && (
-        <div className="mt-8 border-t pt-8 prose prose-sm prose-gray max-w-none">
-          <ReactMarkdown>{result}</ReactMarkdown>
+        <div className="mt-8 border-t pt-8 text-sm text-gray-800 leading-relaxed">
+          <ReactMarkdown
+            components={{
+              h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-3 text-gray-900">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-lg font-semibold mt-6 mb-2 text-gray-900">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-base font-semibold mt-4 mb-1 text-gray-900">{children}</h3>,
+              p: ({ children }) => <p className="mb-3">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc list-outside pl-5 mb-3 space-y-1">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal list-outside pl-5 mb-3 space-y-1">{children}</ol>,
+              li: ({ children }) => <li>{children}</li>,
+              strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
+              a: ({ href, children }) => <a href={href} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{children}</a>,
+              hr: () => <hr className="my-5 border-gray-200" />,
+              blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-200 pl-4 italic text-gray-600 my-3">{children}</blockquote>,
+              code: ({ children }) => <code className="bg-gray-100 rounded px-1 py-0.5 text-xs font-mono">{children}</code>,
+            }}
+          >
+            {result}
+          </ReactMarkdown>
         </div>
       )}
     </main>
