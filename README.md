@@ -1,5 +1,7 @@
 # PubMed Research Agent
 
+**Live demo: [pub-med-agent-proj.vercel.app](https://pub-med-agent-proj.vercel.app/)**
+
 An AI-powered clinical research assistant that searches PubMed and synthesizes evidence-based summaries in response to medical questions.
 
 ## How it works
@@ -32,14 +34,22 @@ streamlit run app.py
 
 ```
 PubMed-Agent-Proj/
-├── app.py               # Streamlit UI
+├── app.py               # Streamlit UI (local alternative)
 ├── test.py              # Quick PubMed connectivity test
-├── requirements.txt
+├── requirements.txt     # Python dependencies
+├── Procfile             # Railway start command
 ├── .env                 # API key (never commit this)
-└── agent/
-    ├── __init__.py
-    ├── pubmed_tools.py  # PubMed functions + tool definitions
-    └── research_agent.py
+├── agent/
+│   ├── __init__.py
+│   ├── pubmed_tools.py  # PubMed functions + tool definitions
+│   └── research_agent.py
+├── api/
+│   ├── main.py          # FastAPI SSE endpoint (deployed on Railway)
+│   └── requirements.txt
+└── frontend/            # Next.js app (deployed on Vercel)
+    └── app/
+        ├── layout.tsx
+        └── page.tsx
 ```
 
 ## Testing PubMed connectivity
