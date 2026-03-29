@@ -1,0 +1,5 @@
+anthropic
+biopython
+fastapi
+uvicorn
+python-dotenv
