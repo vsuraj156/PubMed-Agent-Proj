@@ -118,6 +118,101 @@ def clinical_research_agent(
     return "Max research turns reached. Consider asking a more specific question."
 
 
+def clinical_research_agent_stream(
+    clinical_question: str,
+    model: str = "claude-haiku-4-5-20251001",
+    max_turns: int = 10,
+):
+    """Generator that yields event dicts for SSE streaming."""
+    system_prompt = f"""You are an expert clinical research assistant with access to PubMed, the world's largest biomedical literature database.
+
+    Your capabilities:
+    - search_pubmed: General medical literature search
+    - search_clinical_guidelines: Find evidence-based clinical practice guidelines, systematic reviews, and meta-analyses
+    - search_recent_research: Find cutting-edge research from recent years
+
+    Your responsibilities:
+    1. Search medical literature comprehensively using appropriate tools
+    2. Synthesize findings into evidence-based recommendations
+    3. Always cite sources with PMID numbers and URLs
+    4. Distinguish between different levels of evidence (guidelines vs. individual studies)
+    5. Note any conflicting findings or limitations
+    6. Use appropriate medical terminology
+    7. Organize findings clearly with sections
+
+    Current date: {datetime.now().strftime('%Y-%m-%d')}
+
+    Format your final response as a structured research report with:
+    - Executive Summary
+    - Key Findings (with citations)
+    - Evidence-Based Recommendations
+    - Limitations & Gaps
+    - References
+    """
+
+    tools = [pubmed_search_tool, clinical_guidelines_tool, recent_research_tool]
+    messages = [{"role": "user", "content": clinical_question}]
+
+    yield {"type": "status", "message": "Starting research..."}
+
+    for turn in range(max_turns):
+        yield {"type": "turn", "message": f"Turn {turn + 1}"}
+
+        response = CLIENT.messages.create(
+            model=model,
+            max_tokens=4096,
+            system=system_prompt,
+            messages=messages,
+            tools=tools,
+        )
+
+        messages.append({"role": "assistant", "content": response.content})
+
+        if response.stop_reason == "end_turn":
+            final_text = next(
+                (block.text for block in response.content if hasattr(block, "text")),
+                ""
+            )
+            yield {"type": "result", "content": final_text}
+            return
+
+        if response.stop_reason != "tool_use":
+            break
+
+        tool_results = []
+        for block in response.content:
+            if block.type != "tool_use":
+                continue
+
+            tool_name = block.name
+            args = block.input
+
+            yield {"type": "tool_call", "tool": tool_name, "args": args}
+
+            try:
+                tool_func = TOOL_MAPPING[tool_name]
+                result = tool_func(**args)
+
+                if "error" in result:
+                    yield {"type": "tool_error", "message": result["error"]}
+                else:
+                    yield {"type": "tool_result", "count": result.get("count", 0)}
+
+            except Exception as e:
+                result = {"error": str(e)}
+                yield {"type": "tool_error", "message": str(e)}
+
+            tool_results.append({
+                "type": "tool_result",
+                "tool_use_id": block.id,
+                "content": json.dumps(result),
+            })
+
+        messages.append({"role": "user", "content": tool_results})
+
+    yield {"type": "error", "message": "Max research turns reached. Consider asking a more specific question."}
+
+
 def test():
     question = "What are the current treatment recommendations for type 2 diabetes in adults?"
     result = clinical_research_agent(question)
